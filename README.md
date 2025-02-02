@@ -2,9 +2,9 @@ Cara Konfigurasi Laravel :
 
 **Note** : sebelum melakukan konfigurasi, pastikan anda telah download dan install XAMPP atau Laragon yang dapat support PHP versi 8 keatas supaya aplikasi laravel dapat berjalan
 
-1. copy dan paste file .env.example di dalam folder app, lalu rename file tersebut menjadi .env (isi file .env akan diberikan di nomor 4)
+1. copy dan paste file .env.example di dalam folder yang telah di clone, lalu rename file tersebut menjadi .env (isi file .env akan diberikan di nomor 4)
 
-2. untuk Collection API dan Database ada di dalam foler "Collection API dan DB"
+2. untuk Collection API dan Database ada di dalam folder "Collection API dan DB"
 
 3. Database yang saya upload adalah MySQL, anda bisa melakukan import dengan pilihan DB MySQL
 
