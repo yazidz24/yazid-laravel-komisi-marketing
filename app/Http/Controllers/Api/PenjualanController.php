@@ -9,6 +9,8 @@ use App\Models\Komisi;
 use App\Models\Marketing;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use App\Models\Kredit;
 
 class PenjualanController extends Controller
 {
@@ -17,7 +19,7 @@ class PenjualanController extends Controller
      */
     public function index()
     {
-        $penjualan = Penjualan::all();
+        $penjualan = Penjualan::with('marketing')->get();
 
         return response()->json([
             'success'=>true,
@@ -39,7 +41,17 @@ class PenjualanController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'marketing_id'=>'required',
+            'date'=>'required',
+            'cargo_fee'=>'required',
+            'total_balance'=>'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
         $transactionNumber = Penjualan::generateTransactionNumber();
         $validated = [
             'transaction_number' => $transactionNumber,
@@ -54,7 +66,12 @@ class PenjualanController extends Controller
         try {
             // Step 1: Insert ke tabel penjualan
             $penjualan = Penjualan::create($validated);
-
+            Kredit::create([
+                'penjualan_id'=>$penjualan->id,
+                'grand_total'=>$request->cargo_fee + $request->total_balance,
+                'total_amount'=>0,
+                'status'=>'Belum lunas'
+            ]);
             // Ambil data marketing
             $marketing = Marketing::find($request->marketing_id);
 
@@ -67,7 +84,7 @@ class PenjualanController extends Controller
             // Hitung total omzet untuk marketing tersebut di bulan yang sama
             $totalOmzet = Penjualan::where('marketing_id', $request->marketing_id)
                 ->whereMonth('date', $month)
-                ->whereYear('date', $year)
+                // ->whereYear('date', $year)
                 ->sum('total_balance');
 
             // Hitung persentase komisi berdasarkan total omzet
@@ -141,9 +158,9 @@ class PenjualanController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(string $penjualan)
     {
-        $penjualan = Penjualan::where('id',$id)->first();
+        $penjualan = Penjualan::where('id',$penjualan)->first();
 
         return response()->json([
             'status'=>true,
@@ -156,11 +173,19 @@ class PenjualanController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $penjualan)
     {
+        $validator = Validator::make($request->all(), [
+            'date'=>'required',
+            'cargo_fee'=>'required',
+            'total_balance'=>'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
         $transactionNumber = Penjualan::generateTransactionNumber();
         $validated = [
-            'marketing_id' => $request->marketing_id,
             'date' => $request->date,
             'cargo_fee' => $request->cargo_fee,
             'total_balance' => $request->total_balance,
@@ -170,8 +195,10 @@ class PenjualanController extends Controller
         DB::beginTransaction();
         try {
             // Step 1: Update data penjualan
-            $penjualan = Penjualan::findOrFail($id)->update($validated);
-
+            $penjualan = Penjualan::findOrFail($penjualan)->update($validated);
+            Kredit::where('penjualan_id',$penjualan->id)->update([
+                'grand_total'=>$request->cargo_fee + $request->total_balance,
+            ]);
             // Ambil data marketing
             $marketing = Marketing::find($request->marketing_id);
 
@@ -184,7 +211,7 @@ class PenjualanController extends Controller
             // Hitung total omzet untuk marketing tersebut di bulan yang sama
             $totalOmzet = Penjualan::where('marketing_id', $request->marketing_id)
                 ->whereMonth('date', $month)
-                ->whereYear('date', $year)
+                // ->whereYear('date', $year)
                 ->sum('total_balance');
 
             // Ketentuan komisi
@@ -250,8 +277,34 @@ class PenjualanController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $penjualan)
     {
-        //
+        try{
+
+            $penjualan = Penjualan::where('id',$penjualan);
+
+            if ($penjualan->count() > 0) {
+                Kredit::where('penjualan_id',$penjualan)->delete();
+                $penjualan->delete();
+                return response()->json([
+                    'success'=>true,
+                    'message'=>'Berhasil menghapus data',
+                    'data'=>[]
+                ],200);
+            }else{
+                return response()->json([
+                    'success'=>false,
+                    'message'=>'Gagal menghapus! data tidak ditemukan'
+                ],404);
+            }
+
+        }catch(\Exception $e){
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+
+
     }
 }

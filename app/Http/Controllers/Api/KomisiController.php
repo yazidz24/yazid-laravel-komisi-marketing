@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Komisi;
 
 class KomisiController extends Controller
 {
@@ -12,7 +13,22 @@ class KomisiController extends Controller
      */
     public function index()
     {
-        //
+        $komisi = Komisi::all();
+
+        if ($komisi) {
+
+            return response()->json([
+                'success'=>true,
+                'message'=>'List data komisi',
+                'komisi'=>$komisi
+            ],200);
+        }else{
+            return response()->json([
+                'success'=>false,
+                'message'=>'Data tidak ditemukan',
+                'komisi'=>[]
+            ],404);
+        }
     }
 
     /**

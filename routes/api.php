@@ -5,7 +5,7 @@ use App\Http\Controllers\Api\MarketingController;
 use App\Http\Controllers\Api\PenjualanController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\KreditController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -24,3 +24,5 @@ use Illuminate\Support\Facades\Route;
 Route::resource('/marketing',MarketingController::class);
 Route::resource('/penjualan',PenjualanController::class);
 Route::resource('/komisi',KomisiController::class);
+Route::get('/kredit',[KreditController::class,'index']);
+Route::post('/kredit',[KreditController::class,'store']);

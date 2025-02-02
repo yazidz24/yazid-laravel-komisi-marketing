@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Marketing;
+use App\Models\Kredit;
 
 class Penjualan extends Model
 {
@@ -32,5 +33,8 @@ class Penjualan extends Model
     }
     public function marketing(){
         return $this->belongsTo(Marketing::class,'marketing_id');
+    }
+    public function kredit(){
+        return $this->hasOne(Kredit::class,'penjualan_id');
     }
 }
